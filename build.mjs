@@ -42,7 +42,7 @@ const banner = `// ==UserScript==
 
 /**
  * 直接用 esbuild 的 CLI 二进制，而不是 require('esbuild')。
- * JS API 靠 pipe 和子进程通信，某些受限环境（如被沙箱限制 spawn 的 DSH 会话）会 EPERM；
+ * JS API 走子进程管道，在限制 spawn/pipe 的沙箱或 CI 容器里会 EPERM；
  * CLI 走继承 stdio，哪儿都能跑。
  */
 function esbuildBinary() {
