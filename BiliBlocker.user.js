@@ -19,7 +19,6 @@
 // @connect      api.zhihu.com
 // @connect      www.zhihu.com
 // @connect      gh-proxy.com
-// @connect      workers.dev
 // @connect      fcapp.run
 // @connect      fastly.jsdelivr.net
 // @connect      raw.githubusercontent.com
