@@ -40,27 +40,63 @@ export function extractTitle(card: Element): string {
  * 但也不能一路往上删——到了列容器（col_/container）就必须停，否则整列消失。
  */
 export function hideCard(card: Element): void {
-  let target: Element = card;
-  for (let i = 0; i < 2; i += 1) {
-    const parent = target.parentElement;
-    if (!parent || parent === document.body || parent === document.documentElement) break;
-    const cls = typeof parent.className === 'string' ? parent.className : '';
+  const target = layoutItemOf(card);
 
-    // 只往上收「明确的卡片单元」：class 里带 card/cell/item 且只包着这一张卡。
-    // 以前几乎无条件上收两级，遇到非常规结构会把邻列一起摘掉，表现就是卡片错位。
-    const looksLikeCell = /(^|[s_-])(card|cell|item)([s_-]|$)/i.test(cls) && parent.childElementCount === 1;
-    if (looksLikeCell) {
-      target = parent;
-      continue;
-    }
-    break;
-  }
   // 直接用内联样式隐藏：避免一条全局 [data-zbb] 规则影响到别处，
   // 也避免某些布局里父级被整块摘掉导致邻列错位
   if (target instanceof HTMLElement) {
     target.style.setProperty('display', 'none', 'important');
   }
   target.setAttribute('data-zbb', '1');
+  repackIfSparse(target);
+}
+
+/** 父级是不是 grid / flex 布局容器（这类容器的子元素才有「格子」占位） */
+function isLayoutContainer(el: Element): boolean {
+  if (typeof getComputedStyle !== 'function') return false;
+  const display = getComputedStyle(el).display;
+  return display === 'grid' || display === 'inline-grid' || display.includes('flex');
+}
+
+/**
+ * 找出真正占着「格子」的那一层。
+ *
+ * 首页卡片常见两层：grid 子项（.feed-card）+ 里面的 .bili-video-card。
+ * 只隐藏里面那层，外层格子仍然占位、但内容空了——表现出来就是**首页卡片错位、留空洞**。
+ * 所以从卡片往上收，直到某一层的父级是布局容器为止，那一层才是布局项。
+ */
+function layoutItemOf(card: Element): Element {
+  let target = card;
+  for (let i = 0; i < 3; i += 1) {
+    const parent = target.parentElement;
+    if (!parent || parent === document.body || parent === document.documentElement) break;
+    // 父级是布局容器 → target 就是布局项，收手
+    if (isLayoutContainer(parent)) break;
+
+    const cls = typeof parent.className === 'string' ? parent.className : '';
+    const looksLikeCell = /(^|[\s_-])(card|cell|item)([\s_-]|$)/i.test(cls);
+    // 父级只装着这一张卡，或者它本身就是卡片单元 —— 都可以安全上收
+    if (parent.childElementCount === 1 || looksLikeCell) {
+      target = parent;
+      continue;
+    }
+    break;
+  }
+  return target;
+}
+
+/**
+ * 稀疏打包（grid-auto-flow: row）下，隐藏一个大格子后留下 2×2 空洞，后面的 1×1 卡片
+ * 不会回填，页面看起来就是错位的。把容器切到 dense 让后面的卡片填进来。
+ * 只在真的发生隐藏时改，且只改布局属性，不动 B 站的其它样式。
+ */
+function repackIfSparse(target: Element): void {
+  const grid = target.parentElement;
+  if (!grid || typeof getComputedStyle !== 'function') return;
+  const cs = getComputedStyle(grid);
+  if (cs.display !== 'grid' && cs.display !== 'inline-grid') return;
+  if (cs.gridAutoFlow.includes('dense')) return;
+  if (grid instanceof HTMLElement) grid.style.setProperty('grid-auto-flow', 'row dense');
 }
 
 /**
