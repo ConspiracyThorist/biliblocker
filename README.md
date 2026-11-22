@@ -1,5 +1,10 @@
 # BiliBlocker
 
+[![CI](https://github.com/ConspiracyThorist/biliblocker/actions/workflows/ci.yml/badge.svg)](https://github.com/ConspiracyThorist/biliblocker/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ConspiracyThorist/biliblocker)](https://github.com/ConspiracyThorist/biliblocker/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Greasy Fork](https://img.shields.io/badge/Greasy%20Fork-安装-fb7299)](https://greasyfork.org/scripts/606704)
+
 **B 站推荐流屏蔽器。** 在推荐数据抵达页面之前把它删掉——不是事后遮住，所以没有留白、没有闪烁。
 两件事同时做：**拦截搬运知乎热榜的视频**，以及**按你自己的规则过滤推荐流与评论区**。
 
@@ -67,13 +72,47 @@
 - 只有手动拉黑 UP 且开启「匿名贡献」时，会把 UP 编号与昵称提交到投稿端（不含任何账号信息，可关闭）
 - 不申请 `cookies` 权限，读不到账号信息
 
+## 常见问题
+
+**装上之后没效果？**
+先确认只装了一个版本（扩展或油猴），再看面板「概览」里题库条数与累计拦截数是否在变。默认「保守」档只拦原样搬运，改写过的可能放过，可在设置里切「标准」或「激进」。
+
+**照搬的视频被漏了？**
+记录里没有就能确认没命中。优先加关键词规则（规则页顶部输入框），比调低阈值更可控。
+
+**误拦了正常视频？**
+记录里点「放行」加白名单；或把强度切回「保守」。
+
+**两个版本能一起装吗？**
+不要。它们各自 hook 一遍 `fetch`，判两次、记录重复、开销翻倍。
+
+**题库为什么不涨？**
+题库由数据仓的 Actions 每天跑一次增量：热榜约 30 条，去重后实际新增十几到二十条，所以是缓慢爬升。
+
+## 目录结构
+
+```
+src/core/        与宿主无关的内核：归一、相似度、判定、剪枝、hook、扫描、规则、评论、面板、预加载、存储
+src/extension/   Chrome MV3 壳：background（唯一配置写者）/ content / page(MAIN world) / popup
+src/userscript/  油猴壳：同一套 core，GM_* 适配
+assets/icons/    扩展与脚本图标
+tools/           构建辅助（zip 打包）
+docs/            面向脚本市场的附加信息
+```
+
+## 参与
+
+- 贡献流程与提交约定见 [CONTRIBUTING.md](./CONTRIBUTING.md)
+- 漏洞请走私密渠道，见 [SECURITY.md](./SECURITY.md)
+- 行为准则见 [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
+
 ## 开发
 
 ```bash
 npm install
-npm run build      # dist/BiliBlocker.zip + dist/BiliBlocker.user.js，并在仓库根留一份 user.js
+npm run build      # dist/BiliBlocker.zip + 两种 user.js，并在仓库根留一份
 npm run typecheck
-npm test           # 本地测试套件（tests/ 不进仓库）
+npm test           # 本地测试套件（tests/ 按维护者惯例不进仓库）
 ```
 
 架构、判定规则与性能数据见 [DEVELOP.md](./DEVELOP.md)。
