@@ -2,7 +2,7 @@
 // @name         BiliBlocker — B站推荐流屏蔽器
 // @name:en      BiliBlocker — Bilibili Feed Blocker
 // @namespace    biliblocker
-// @version      1.0.2
+// @version      1.0.1
 // @description  拦截搬运知乎热榜的 B 站视频（渲染前删除，无留白），并按关键词/UP/分区/数值规则过滤推荐流与评论区
 // @description:en Block Bilibili feed videos that copy Zhihu hot-list questions, plus rule-based filtering of feeds and comments
 // @author       ConspiracyThorist
@@ -1874,7 +1874,7 @@ a:hover > [data-zbb-up],
       ${TABS.map((t) => `<button data-tab="${t.id}">${t.icon}${t.name}</button>`).join("")}
     </div>
     <div class="zbb-body"><div data-pane="overview"></div><div data-pane="log" class="zbb-hidden"></div><div data-pane="rules" class="zbb-hidden"></div><div data-pane="settings" class="zbb-hidden"></div></div>
-    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.2</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
+    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.1</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
   `;
     opts.mount.appendChild(root);
     let active = "overview";
