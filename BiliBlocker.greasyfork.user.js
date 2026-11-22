@@ -2,7 +2,7 @@
 // @name         BiliBlocker — B站推荐流屏蔽器
 // @name:en      BiliBlocker — Bilibili Feed Blocker
 // @namespace    biliblocker
-// @version      1.0.1
+// @version      1.0.2
 // @description  拦截搬运知乎热榜的 B 站视频（渲染前删除，无留白），并按关键词/UP/分区/数值规则过滤推荐流与评论区
 // @description:en Block Bilibili feed videos that copy Zhihu hot-list questions, plus rule-based filtering of feeds and comments
 // @author       ConspiracyThorist
@@ -325,22 +325,41 @@
     return "";
   }
   function hideCard(card) {
+    const target = layoutItemOf(card);
+    if (target instanceof HTMLElement) {
+      target.style.setProperty("display", "none", "important");
+    }
+    target.setAttribute("data-zbb", "1");
+    repackIfSparse(target);
+  }
+  function isLayoutContainer(el) {
+    if (typeof getComputedStyle !== "function") return false;
+    const display = getComputedStyle(el).display;
+    return display === "grid" || display === "inline-grid" || display.includes("flex");
+  }
+  function layoutItemOf(card) {
     let target = card;
-    for (let i = 0; i < 2; i += 1) {
+    for (let i = 0; i < 3; i += 1) {
       const parent = target.parentElement;
       if (!parent || parent === document.body || parent === document.documentElement) break;
+      if (isLayoutContainer(parent)) break;
       const cls = typeof parent.className === "string" ? parent.className : "";
-      const looksLikeCell = /(^|[s_-])(card|cell|item)([s_-]|$)/i.test(cls) && parent.childElementCount === 1;
-      if (looksLikeCell) {
+      const looksLikeCell = /(^|[\s_-])(card|cell|item)([\s_-]|$)/i.test(cls);
+      if (parent.childElementCount === 1 || looksLikeCell) {
         target = parent;
         continue;
       }
       break;
     }
-    if (target instanceof HTMLElement) {
-      target.style.setProperty("display", "none", "important");
-    }
-    target.setAttribute("data-zbb", "1");
+    return target;
+  }
+  function repackIfSparse(target) {
+    const grid = target.parentElement;
+    if (!grid || typeof getComputedStyle !== "function") return;
+    const cs = getComputedStyle(grid);
+    if (cs.display !== "grid" && cs.display !== "inline-grid") return;
+    if (cs.gridAutoFlow.includes("dense")) return;
+    if (grid instanceof HTMLElement) grid.style.setProperty("grid-auto-flow", "row dense");
   }
   function ensureStyle(doc = document) {
     if (doc.getElementById(STYLE_ID)) return;
@@ -1874,7 +1893,7 @@ a:hover > [data-zbb-up],
       ${TABS.map((t) => `<button data-tab="${t.id}">${t.icon}${t.name}</button>`).join("")}
     </div>
     <div class="zbb-body"><div data-pane="overview"></div><div data-pane="log" class="zbb-hidden"></div><div data-pane="rules" class="zbb-hidden"></div><div data-pane="settings" class="zbb-hidden"></div></div>
-    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.1</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
+    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.2</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
   `;
     opts.mount.appendChild(root);
     let active = "overview";
