@@ -2,11 +2,7 @@
 
 ## 开发环境
 
-```bash
-npm install
-npm run build       # dist/BiliBlocker.zip、dist/BiliBlocker.user.js，并在仓库根留一份 user.js
-npm run typecheck
-```
+Node 20+，命令见 README 的「开发」一节（`npm install` / `npm run build` / `npm run typecheck`）。
 
 ## 提交约定
 
