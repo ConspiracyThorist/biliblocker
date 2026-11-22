@@ -9,14 +9,14 @@ const root = dirname(fileURLToPath(import.meta.url));
 const dist = join(root, 'dist');
 const extDir = join(dist, 'extension');
 
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 
 const banner = `// ==UserScript==
 // @name         BiliBlocker — B站推荐流屏蔽器
 // @name:en      BiliBlocker — Bilibili Feed Blocker
 // @namespace    biliblocker
 // @version      ${VERSION}
-// @description  拦截 B 站首页搬运知乎热榜的视频，并按关键词/UP/分区/数值规则过滤推荐流与评论区
+// @description  拦截搬运知乎热榜的 B 站视频（渲染前删除，无留白），并按关键词/UP/分区/数值规则过滤推荐流与评论区
 // @description:en Block Bilibili feed videos that copy Zhihu hot-list questions, plus rule-based filtering of feeds and comments
 // @author       ConspiracyThorist
 // @homepageURL  https://github.com/ConspiracyThorist/biliblocker
