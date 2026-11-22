@@ -1,26 +1,25 @@
 {
-  "name": "bilihoyofairy",
-  "version": "0.0.8",
+  "name": "biliblocker",
+  "version": "1.0.0",
   "private": true,
+  "description": "B 站推荐流屏蔽器：拦截搬运知乎热榜的视频，并按关键词/UP/分区/数值规则过滤推荐流与评论区（Chrome MV3 扩展 + 油猴脚本，共用一套内核）",
   "type": "module",
-  "description": "B 站推荐流净化油猴脚本（biliHoyoFairy）",
-  "scripts": {
-    "build": "node scripts/build.mjs",
-    "dev": "node scripts/build.mjs --watch",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest",
-    "lint": "eslint src tests"
-  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ConspiracyThorist/biliblocker.git"
+  },
+  "homepage": "https://github.com/ConspiracyThorist/biliblocker",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node tests/run.mjs"
+  },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@types/tampermonkey": "^5.0.5",
-    "esbuild": "^0.28.1",
-    "eslint": "^10.5.0",
-    "globals": "^17.6.0",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.61.1",
-    "vitest": "^4.1.9"
+    "@types/chrome": "^0.3.7",
+    "esbuild": "^0.25.0",
+    "happy-dom": "^21.0.4",
+    "libsodium-wrappers": "^0.8.4",
+    "typescript": "^5.6.0"
   }
 }
