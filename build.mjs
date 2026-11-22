@@ -57,7 +57,7 @@ function esbuildBinary() {
   return bin;
 }
 
-function bundle(entry, outfile, extra = []) {
+function bundle(entry, outfile, extra = [], minify = true) {
   execFileSync(
     esbuildBinary(),
     [
@@ -67,8 +67,9 @@ function bundle(entry, outfile, extra = []) {
       '--target=chrome111',
       '--legal-comments=none',
       '--charset=utf8',
-      // 压缩：document_start 注入的脚本越小，解析与执行越早结束（体积约减一半）
-      '--minify',
+      // 压缩：document_start 注入的脚本越小，解析与执行越早结束（体积约减一半）。
+      // 但脚本市场（Greasy Fork）要求源码可读，所以额外打一份不压缩的给发布用。
+      ...(minify ? ['--minify'] : []),
       '--log-level=warning',
       `--outfile=${outfile}`,
       ...extra,
@@ -92,6 +93,13 @@ async function main() {
   bundle(join(root, 'src/userscript/main.ts'), join(dist, 'BiliBlocker.user.js'), [
     `--banner:js=${banner}`,
   ]);
+  // 给脚本市场（Greasy Fork）的版本：不压缩，源码可读
+  bundle(
+    join(root, 'src/userscript/main.ts'),
+    join(dist, 'BiliBlocker.greasyfork.user.js'),
+    [`--banner:js=${banner}`],
+    false,
+  );
 
   await cp(join(root, 'manifest.json'), join(extDir, 'manifest.json'));
   await cp(join(root, 'src/extension/popup.html'), join(extDir, 'popup.html'));
@@ -104,11 +112,13 @@ async function main() {
 
   const zip = await createZip(extDir, join(dist, 'BiliBlocker.zip'));
   const userJs = await stat(join(dist, 'BiliBlocker.user.js'));
+  const gfJs = await stat(join(dist, 'BiliBlocker.greasyfork.user.js'));
 
   console.log('构建完成');
   console.log(`  扩展目录    dist/extension  (${zip.fileCount} 个文件)`);
   console.log(`  扩展压缩包  dist/BiliBlocker.zip  ${kb(zip.size)}`);
-  console.log(`  油猴脚本    dist/BiliBlocker.user.js  ${kb(userJs.size)}`);
+  console.log(`  油猴脚本    dist/BiliBlocker.user.js  ${kb(userJs.size)}（压缩，直接安装）`);
+  console.log(`  脚本市场版  dist/BiliBlocker.greasyfork.user.js  ${kb(gfJs.size)}（未压缩，源码可读）`);
 }
 
 main().catch((err) => {
