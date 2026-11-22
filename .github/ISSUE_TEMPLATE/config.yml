@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全问题
+    url: https://github.com/ConspiracyThorist/biliblocker/security/advisories/new
+    about: 漏洞请走私密渠道，不要公开提交
+  - name: 使用问题与讨论
+    url: https://github.com/ConspiracyThorist/biliblocker/discussions
+    about: 不确定是不是 bug、或者想问怎么配置规则，先在这里聊
