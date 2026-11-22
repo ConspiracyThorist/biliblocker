@@ -20,7 +20,6 @@
 - 脚本市场附加信息按主流写法重排：分组功能、前置条件、面板与规则速查表、注意事项、更新日志
 - 精简文档数量：`CODE_OF_CONDUCT.md` 并入 `CONTRIBUTING.md`，`CREDITS.md` 并入 README 的「许可证与署名」，
   `DEVELOP.md` 移到 `docs/architecture.md`；根目录只留 README / CHANGELOG / CONTRIBUTING / SECURITY
-- 仓库不再包含测试脚手架与本地工具：`npm test` 脚本、测试引用、发版与校验脚本都留在本地
 
 ## [1.0.1] - 2026-11-22
 
