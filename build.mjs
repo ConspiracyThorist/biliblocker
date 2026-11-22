@@ -9,7 +9,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 const dist = join(root, 'dist');
 const extDir = join(dist, 'extension');
 
-const VERSION = '1.0.2';
+const VERSION = '1.0.1';
 
 const banner = `// ==UserScript==
 // @name         BiliBlocker — B站推荐流屏蔽器
