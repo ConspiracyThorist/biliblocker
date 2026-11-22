@@ -10,6 +10,11 @@
 
 提供 Chrome 扩展与油猴脚本两种形态，共用同一套内核（`src/core/`）。
 
+## 界面
+
+![概览](assets/screenshots/panel-overview.png)
+![规则](assets/screenshots/panel-rules.png)
+
 ## 能做什么
 
 - **知乎搬运拦截**：同步知乎热榜题库（当前 600+ 条，每天增量），按标题归一后做 bigram 相似度匹配，命中即从 feed JSON 里摘掉
@@ -23,6 +28,9 @@
 ## 安装
 
 ### 油猴（Tampermonkey）
+
+前置：浏览器装好 **Tampermonkey**（或 Violentmonkey）。Chrome / Edge 需要在 `chrome://extensions`
+打开「开发者模式」，并允许用户脚本运行，否则脚本不会执行。
 
 **推荐**：从 Greasy Fork 安装 —— <https://greasyfork.org/scripts/606704>
 
