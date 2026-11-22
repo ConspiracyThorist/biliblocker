@@ -1,8 +1,4 @@
-# BiliBlocker 附加信息（脚本市场用）
-
-## 这是什么
-
-B 站推荐流屏蔽器。在推荐数据抵达页面之前就把它删掉——不是事后遮住，所以没有留白、没有闪烁。
+**B 站推荐流屏蔽器。** 在推荐数据抵达页面之前就把它删掉——不是事后遮住，所以没有留白、没有闪烁。
 两件事同时做：拦截**搬运知乎热榜**的视频，以及按你自己的**规则**过滤推荐流与评论区。
 
 ## 功能
@@ -16,7 +12,6 @@ B 站推荐流屏蔽器。在推荐数据抵达页面之前就把它删掉——
 - **白名单优先**：标题 / UP / 分区 / UID 命中白名单永不屏蔽
 - **一次点击**：卡片上、播放页里都能「屏蔽此 UP」，拦截记录里能「放行」
 - **规则导入**：可直接导入 biliHoyoFairy 导出的 JSON，联网维度会明确列为跳过
-- **稳定**：配置写入带版本与自动备份，多标签页不会互相覆盖
 
 ## 使用
 
@@ -67,6 +62,8 @@ B 站推荐流屏蔽器。在推荐数据抵达页面之前就把它删掉——
 
 ## 源码与更新日志
 
-- 源码：<https://github.com/ConspiracyThorist/biliblocker>（MIT，含开发说明 `DEVELOP.md`）
+- 源码与开发说明：<https://github.com/ConspiracyThorist/biliblocker>
 - 更新日志：<https://github.com/ConspiracyThorist/biliblocker/blob/main/CHANGELOG.md>
-- 扩展版：<https://github.com/ConspiracyThorist/biliblocker/releases>
+- 扩展版（Chrome / Edge）：<https://github.com/ConspiracyThorist/biliblocker/releases>
+
+许可证：MIT。
