@@ -127,9 +127,6 @@ npm run typecheck
 
 MIT，版权归 ConspiracyThorist。
 
-本项目移植并改写了以下 MIT 项目的部分代码，按 MIT 要求保留其版权声明：
-
-- [biliHoyoFairy](https://github.com/gendu-amd/biliHoyoFairy)（作者 gendu-amd）：规则文本归一、卡片字段归一与 DOM 抽取、评论区判定维度
-- bili-comment-preload（本项目维护者早前的油猴脚本）：评论区大图预加载思路
-
-改动方式与用到的文件在 [docs/architecture.md](./docs/architecture.md) 的「移植说明」一节。
+移植并改写了 [biliHoyoFairy](https://github.com/gendu-amd/biliHoyoFairy)（MIT）与 bili-comment-preload
+的部分代码，按 MIT 要求保留其版权声明；具体文件与改动见
+[docs/architecture.md](./docs/architecture.md#移植说明)。
