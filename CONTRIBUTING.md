@@ -6,7 +6,6 @@
 npm install
 npm run build       # dist/BiliBlocker.zip、dist/BiliBlocker.user.js，并在仓库根留一份 user.js
 npm run typecheck
-npm test            # 本地测试套件（tests/ 不进仓库）
 ```
 
 ## 提交约定
@@ -20,7 +19,7 @@ npm test            # 本地测试套件（tests/ 不进仓库）
 1. 两端（扩展 + 油猴）共用 `src/core/`，**壳层只做适配**；改内核后两端产物都要重建
 2. 新增阈值 / 上限 / 频率要写实测依据在注释里，不拍脑袋
 3. 热路径（拦截、扫描）改动需附带耗时数字
-4. 修 bug 要留下能复现它的测试；回滚修复后该测试应变红
+4. 修 bug 先能稳定复现，改完做一次回归自检（把修复回滚后问题应重现）
 5. 外部依赖失败必须降级：不白屏、不丢数据、不阻塞主流程
 
 ## 隐私红线
