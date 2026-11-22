@@ -5,21 +5,29 @@
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-22
+
+### Fixed
+
+- **首页屏蔽后卡片错位、留空洞**：以前只隐藏卡片里面那层，外层格子还占着位置但不出图；
+  现在隐藏真正占位的格子，并把稀疏网格切成 dense，后面的卡片会补上空位
+- 页面边角偶尔残留一块空白（同一原因）
+
 ### Added
 
 - `SECURITY.md`：漏洞报告走私密渠道，写明设计上的非目标与残余风险
-- `CODE_OF_CONDUCT.md`（Contributor Covenant 2.1）、Issue 模板（bug / feature / config）、PR 模板、Dependabot 配置
+- `CODE_OF_CONDUCT.md`（Contributor Covenant 2.1）、Issue 模板（bug / feature / config）、Dependabot 配置
 - `.editorconfig`：统一 UTF-8 / LF / 2 空格 / 120 列
 - README 增加状态徽章、常见问题、目录结构与「参与」入口
 
 ### Changed
 
-- `LICENSE` 的版权行改回本项目作者；移植来源仍在 `CREDITS.md` 里逐一列明
+- `LICENSE` 的版权行改回本项目作者；移植来源仍在 README 的「许可证与署名」里列明
 - `package.json` 声明 `engines.node >= 20`，并补 `lint` 脚本作为 `typecheck` 的别名
 - 脚本 `@description` 改成「做什么 + 在哪生效」的一句话
 - 脚本市场附加信息按主流写法重排：分组功能、前置条件、面板与规则速查表、注意事项、更新日志
-- 精简文档：`CODE_OF_CONDUCT.md` 并入 `CONTRIBUTING.md`，`CREDITS.md` 并入 README 的「许可证与署名」，
-  `DEVELOP.md` 移到 `docs/architecture.md`，删掉 PR 模板；根目录只留 README / CHANGELOG / CONTRIBUTING / SECURITY
+- 精简文档：`CODE_OF_CONDUCT.md` 并入 `CONTRIBUTING.md`，`CREDITS.md` 并入 README，`DEVELOP.md` 移到
+  `docs/architecture.md`，删掉 PR 模板
 
 ## [1.0.1] - 2026-11-22
 
