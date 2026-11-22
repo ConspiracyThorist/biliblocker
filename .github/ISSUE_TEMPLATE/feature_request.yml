@@ -1,0 +1,38 @@
+name: 功能建议
+description: 提议新的过滤维度、交互或兼容性改进
+title: 'feat: '
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提之前建议先看一眼 [DEVELOP.md](../blob/main/DEVELOP.md) 的「判定规则」与「匹配性能」两节，
+        有些想法受数据可得性限制（例如按收藏/投币比过滤，feed 里拿不到这些字段）。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 想解决的问题
+      description: 描述场景，而不是先描述实现
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 你设想的做法
+  - type: dropdown
+    id: area
+    attributes:
+      label: 涉及范围
+      options:
+        - 规则过滤（关键词/UP/UID/BV/分区/数值）
+        - 知乎搬运匹配
+        - 评论区
+        - 面板与交互
+        - 其它平台或第三方客户端兼容（如 BewlyCat）
+        - 性能
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 你试过的替代方案（可选）
