@@ -1,81 +1,77 @@
-# biliHoyoFairy
+# BiliBlocker
 
-**净化 B 站推荐流的用户脚本。** 在推荐数据抵达页面之前就把命中规则的视频删掉——不是事后隐藏，所以没有遮罩、留白和闪烁。
+**B 站推荐流屏蔽器。** 在推荐数据抵达页面之前把它删掉——不是事后遮住，所以没有留白、没有闪烁。
+两件事同时做：**拦截搬运知乎热榜的视频**，以及**按你自己的规则过滤推荐流与评论区**。
 
-[![Install](https://img.shields.io/badge/Tampermonkey-一键安装-fb7299)](https://raw.githubusercontent.com/gendu-amd/biliHoyoFairy/main/biliHoyoFairy.user.js)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.0.8-lightgrey)](CHANGELOG.md)
-
-![拦截前后对比](https://github.com/user-attachments/assets/49cb7653-931d-407d-9369-ac65e018b8f9)
-
-<table>
-<tr>
-<td width="33%" valign="top"><b>设置面板</b><br>即改即生效<br><br><img alt="设置面板" src="https://github.com/user-attachments/assets/73b25954-3bd7-49d1-a002-6e354043db3d"></td>
-<td width="33%" valign="top"><b>屏蔽记录</b><br>看得见拦了什么，可就地放行<br><br><img alt="屏蔽记录" src="https://github.com/user-attachments/assets/4a2148cb-785a-42ad-9362-b4506ea2176f"></td>
-<td width="33%" valign="top"><b>评论区过滤</b><br>引战 / 水军 / 营销评论<br><br><img alt="评论区过滤" src="https://github.com/user-attachments/assets/b0ea0c59-1a6d-46e8-a121-321339777d2c"></td>
-</tr>
-</table>
-
-## 安装
-
-1. 装 [Tampermonkey](https://www.tampermonkey.net/)（Edge / Chrome / Firefox）
-2. 点上面的 **一键安装** 徽章
-3. 打开 B 站，右下角出现 🛡 角标即可用
-
-> 升级后请把已打开的 B 站标签页刷新一遍。
+提供 Chrome 扩展与油猴脚本两种形态，共用同一套内核（`src/core/`）。
 
 ## 能做什么
 
-**过滤维度** — 关键词（支持正则与 `title:` / `up:` / `part:` 作用域）、UP 主 / UID、BV 号、分区、视频标签、组合标签、UP 简介、播放量、点赞数、时长、广告卡、直播卡。白名单优先级最高。
+- **知乎搬运拦截**：同步知乎热榜题库（当前 600+ 条，每天增量），按标题归一后做 bigram 相似度匹配，命中即从 feed JSON 里摘掉
+- **规则过滤**：关键词（支持 `/正则/` 与 `title:` / `up:` / `part:` 作用域）、UP 名、UID、BV 号、分区、播放/点赞/时长阈值、营销号低赞率、广告卡、直播卡
+- **评论区过滤**：关键词、昵称、等级、默认头像、AI 总结机器人、带货导流、纯表情、纯 @；命中折叠成可展开的灰条
+- **评论区大图预加载**：图片滚进视口就缓存原图，点开不再转圈
+- **白名单优先**：标题 / UP / 分区 / UID 命中白名单永不屏蔽
+- **一次点击**：卡片上「屏蔽此 UP」、播放页「屏蔽此 UP」、记录里「放行」
+- **双端一致**：扩展与油猴共用面板、规则、存储层
 
-**覆盖范围** — 首页、热门、排行榜、搜索、播放页推荐、动态、评论区。
+## 安装
 
-**一键拉黑** — 右键卡片或播放页 UP 即可拉黑，同步到 B 站账号黑名单，刷新后不再推荐；可撤销。支持批量。
+### 油猴（Tampermonkey）
 
-**看得见** — 屏蔽记录显示每条被拦的原因**具体是哪条规则**，并提供「放行」与「删规则」；规则体检列出过宽和从未命中的规则；运行自检在 B 站改版导致脚本静默失效时报警。
+1. 打开 [BiliBlocker.user.js](./BiliBlocker.user.js)
+2. Tampermonkey 会弹出安装页；或把它拖进浏览器窗口
+3. 刷新 B 站，右下角出现胶囊
 
-**规则订阅** — 从 URL 自动拉取并合并黑名单，也能把自己的名单一键导出成订阅格式分享出去。
+### Chrome 扩展
 
-## 规则语法
+1. 下载 Release 里的 `BiliBlocker.zip` 并解压
+2. 打开 `chrome://extensions`，启用「开发者模式」
+3. 「加载已解压的扩展程序」，选择解压目录
 
-| 写法 | 含义 |
-| --- | --- |
-| `原神` | 包含即命中，忽略大小写与全半角 |
-| `/震惊.*竟然/` | 正则，可加 `/…/i` 等标志 |
-| `title:原神` | 只匹配标题（另有 `up:` / `part:`） |
-| `原神 鸣潮` | 仅「组合标签」字段：同时含这一组才屏蔽 |
+> 需要 Chrome 116+（侧边栏 API 与 `world: "MAIN"` 注入）。
+> **两个版本不要同时装**：会各自 hook 一遍 fetch，记录重复、开销翻倍。
 
-一次可粘贴多条，用换行或逗号分隔。面板每个输入框旁的 `?` 里有同一份速查。
+## 用法
+
+点右下角胶囊展开面板，四段：**概览 / 拦截 / 规则 / 设置**。
+
+规则页顶部输入框会自动识别类型：
+
+| 输入 | 落到哪 |
+|---|---|
+| `BV1xx411c7mD` | BV 号（屏蔽单视频） |
+| `7001`（纯数字） | UID |
+| `/震惊[！!]{2,}/` | 正则关键词 |
+| `送十连` | 标题关键词 |
+| `up:某个UP` | 只匹配 UP 名 |
+
+**设置 → 数据 → 导入规则文件** 可以直接导入 `biliHoyoFairy` 导出的规则 JSON；
+联网维度（视频标签 / 组合标签 / UP 简介）本产品未实现，导入时会明确列出跳过项。
+
+## 数据来源
+
+题库与 UP 库由数据仓 [ConspiracyThorist/zhihu-bili-blocker](https://github.com/ConspiracyThorist/zhihu-bili-blocker)
+的 GitHub Actions 每天更新，客户端从 CDN 拉取；本地也会按 30 天窗口累积，上限 12000 条。
 
 ## 隐私
 
-无自有服务器，不上传任何数据。只向 `api.bilibili.com`（取数 / 拉黑）与**你自己添加**的订阅源发起请求。全部规则与统计存在浏览器本地。
-
-## 注意事项
-
-- **拉黑写入你的 B 站账号黑名单**，执行前有二次确认；批量拉黑限速并在触发风控时自动暂停续传。
-- 「精确过滤」开启后才会按需读取视频标签、UP 简介、点赞数等数据；不开则完全不联网。
-- 规则改动会自动备份（升级前、规则条数骤降前），可在「工具 → 🗂 配置备份」回滚。
+- 题库、规则、命中记录全部存在浏览器本地，不上传
+- 只有手动拉黑 UP 且开启「匿名贡献」时，会把 UP 编号与昵称提交到投稿端（不含任何账号信息，可关闭）
+- 不申请 `cookies` 权限，读不到账号信息
 
 ## 开发
 
 ```bash
-npm ci
-npm run build      # TypeScript → biliHoyoFairy.user.js（提交进仓库）
-npm test           # vitest
-npm run typecheck && npm run lint
+npm install
+npm run build      # dist/BiliBlocker.zip + dist/BiliBlocker.user.js，并在仓库根留一份 user.js
+npm run typecheck
+npm test           # 本地测试套件（tests/ 不进仓库）
 ```
 
-架构、分层约定与设计红线见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)；发版前的冒烟清单见 [`docs/review/SMOKE-TEST.md`](docs/review/SMOKE-TEST.md)；变更记录见 [`CHANGELOG.md`](CHANGELOG.md)。
+架构、判定规则与性能数据见 [DEVELOP.md](./DEVELOP.md)。
 
-欢迎 Issue 与 PR。改了 `src/` 请一并提交重新构建的产物，并升 `src/meta.js` 的 `@version`。
+## 许可证
 
-## 致谢
-
-设计调研并借鉴了 [tjxwork 的多维过滤脚本](https://greasyfork.org/zh-CN/scripts/481629)、[festoney8/bilibili-cleaner](https://github.com/festoney8/bilibili-cleaner)、[codertesla/bilibili-1-click-blocker](https://github.com/codertesla/bilibili-1-click-blocker)、[nanatuo/bilibili-blocker](https://github.com/nanatuo/bilibili-blocker) 与 [tjsky/TabulaBili](https://github.com/tjsky/TabulaBili)。
-
-## License
-
-[MIT](LICENSE)
-
-繁简对照表来自 [OpenCC](https://github.com/BYVoid/OpenCC) 的 `TSCharacters.txt`（Apache-2.0），已过滤为单字一一对应；仅在开启「简繁归一」时使用。
+MIT。本项目移植并改写了 [biliHoyoFairy](https://github.com/gendu-amd/biliHoyoFairy)（MIT）与
+bili-comment-preload 的部分逻辑，来源与版权声明见 [CREDITS.md](./CREDITS.md)。
