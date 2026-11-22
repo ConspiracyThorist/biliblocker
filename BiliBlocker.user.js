@@ -2,7 +2,7 @@
 // @name         BiliBlocker — B站推荐流屏蔽器
 // @name:en      BiliBlocker — Bilibili Feed Blocker
 // @namespace    biliblocker
-// @version      1.0.2
+// @version      1.0.1
 // @description  拦截搬运知乎热榜的 B 站视频（渲染前删除，无留白），并按关键词/UP/分区/数值规则过滤推荐流与评论区
 // @description:en Block Bilibili feed videos that copy Zhihu hot-list questions, plus rule-based filtering of feeds and comments
 // @author       ConspiracyThorist
@@ -149,7 +149,7 @@ a:hover > [data-zbb-up],
       ${Tt.map(c=>`<button data-tab="${c.id}">${c.icon}${c.name}</button>`).join("")}
     </div>
     <div class="zbb-body"><div data-pane="overview"></div><div data-pane="log" class="zbb-hidden"></div><div data-pane="rules" class="zbb-hidden"></div><div data-pane="settings" class="zbb-hidden"></div></div>
-    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.2</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
+    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.1</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
   `,e.mount.appendChild(n);let o="overview",r=c=>n.querySelector(`[data-pane="${c}"]`),i=c=>{o=c,n.querySelectorAll(".zbb-seg button").forEach(d=>{d.classList.toggle("on",d.dataset.tab===c)});for(let d of Tt)r(d.id).classList.toggle("zbb-hidden",d.id!==c);h()},s=c=>{let d=e.getState();e.onPatch({rules:{...d.settings.rules,...c}})},a=c=>{let d=e.getState();e.onPatch({comments:{...d.settings.comments,...c}})},l=c=>{let d={zhihu:0,rule:0,other:0};for(let M of c.records)d[Lt(M)]+=1;let S=Math.max(1,d.zhihu+d.rule+d.other),z=M=>`${Math.round(M/S*100)}%`,_=c.records.slice(0,3),y=c.current;return`
       ${y?`<div class="zbb-card" style="border-color:var(--pink-line)">
         <div class="zbb-eyebrow">正在看</div>
