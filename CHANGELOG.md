@@ -18,6 +18,8 @@
 - `package.json` 声明 `engines.node >= 20`，并补 `lint` 脚本作为 `typecheck` 的别名
 - 脚本 `@description` 改成「做什么 + 在哪生效」的一句话
 - 脚本市场附加信息按主流写法重排：分组功能、前置条件、面板与规则速查表、注意事项、更新日志
+- 精简文档数量：`CODE_OF_CONDUCT.md` 并入 `CONTRIBUTING.md`，`CREDITS.md` 并入 README 的「许可证与署名」，
+  `DEVELOP.md` 移到 `docs/architecture.md`；根目录只留 README / CHANGELOG / CONTRIBUTING / SECURITY
 
 ## [1.0.1] - 2026-11-22
 
