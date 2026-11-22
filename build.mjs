@@ -9,7 +9,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 const dist = join(root, 'dist');
 const extDir = join(dist, 'extension');
 
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 
 const banner = `// ==UserScript==
 // @name         BiliBlocker — B站推荐流屏蔽器
@@ -21,7 +21,7 @@ const banner = `// ==UserScript==
 // @author       ConspiracyThorist
 // @homepageURL  https://github.com/ConspiracyThorist/biliblocker
 // @supportURL   https://github.com/ConspiracyThorist/biliblocker/issues
-// @icon         https://fastly.jsdelivr.net/gh/ConspiracyThorist/biliblocker@main/assets/icons/icon128.png
+// @icon         https://fastly.jsdelivr.net/gh/ConspiracyThorist/zhihu-bili-blocker@main/assets/icons/icon128.png
 // @match        https://www.bilibili.com/*
 // @run-at       document-start
 // @grant        GM_xmlhttpRequest
