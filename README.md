@@ -12,8 +12,8 @@
 
 ## 界面
 
-![概览](assets/screenshots/panel-overview.png)
-![规则](assets/screenshots/panel-rules.png)
+![概览](assets/shots/panel-overview.png)
+![规则](assets/shots/panel-rules.png)
 
 ## 能做什么
 
