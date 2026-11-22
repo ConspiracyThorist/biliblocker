@@ -13,7 +13,8 @@
   "scripts": {
     "build": "node build.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/run.mjs"
+    "test": "node tests/run.mjs",
+    "lint": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/chrome": "^0.3.7",
@@ -21,5 +22,8 @@
     "happy-dom": "^21.0.4",
     "libsodium-wrappers": "^0.8.4",
     "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
