@@ -5,6 +5,18 @@
 
 ## [Unreleased]
 
+### Added
+
+- `SECURITY.md`：漏洞报告走 GitHub 私密渠道，写明设计上的非目标与残余风险
+- `CODE_OF_CONDUCT.md`（Contributor Covenant 2.1）、PR 模板、Issue 模板、Dependabot 配置
+- `.editorconfig`：统一 UTF-8 / LF / 2 空格 / 120 列
+- README 增加状态徽章、常见问题、目录结构与「参与」入口
+
+### Changed
+
+- `LICENSE` 的版权行改回本项目作者；移植来源仍在 `CREDITS.md` 里逐一列明
+- `package.json` 声明 `engines.node >= 20`，并补 `lint` 脚本作为 `typecheck` 的别名
+
 ## [1.0.1] - 2026-11-22
 
 ### Fixed
