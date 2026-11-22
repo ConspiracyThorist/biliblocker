@@ -1,0 +1,69 @@
+name: 缺陷报告
+description: 反馈可复现的问题（安全问题请走 SECURITY.md 的私密渠道）
+title: 'bug: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。**安全漏洞请不要在这里提交**，见 [SECURITY.md](../blob/main/SECURITY.md)。
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      description: 扩展看 `manifest.json` 的 version，油猴看管理面板里的版本号
+      placeholder: 1.0.1
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: 客户端
+      options:
+        - Chrome 扩展
+        - 油猴脚本（Tampermonkey / Violentmonkey）
+        - 两个都装了（会互相干扰，请先只留一个再复测）
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: 浏览器与系统
+      placeholder: Chrome 131 / Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 越具体越好。涉及具体视频时给出 BV 号，涉及规则时贴出规则内容
+      placeholder: |
+        1. 打开 B 站首页
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: 控制台报错（可选）
+      description: F12 → Console，复制与本项目相关的报错；不要把 cookie 或账号信息贴进来
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 自查
+      options:
+        - label: 已确认只安装了一个版本（扩展或油猴）
+        - label: 已升级到最新版本后仍可复现
