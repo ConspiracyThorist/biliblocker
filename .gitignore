@@ -1,15 +1,19 @@
-# 本地文件，不随仓库发布
-reference/
-local/
-
-# 依赖与构建缓存（产物 biliHoyoFairy.user.js 仍随仓库提交）
+# 依赖与构建产物
 node_modules/
-coverage/
-*.tsbuildinfo
+dist/
+.test-tmp/
+.dsh-office-*
 
-# 系统 / 编辑器
+# 体检与调参的生成物
+reports/
+
+# 测试套件与上游参考代码由维护者本地保留，不进仓库
+tests/
+legacy/
+
+# 本地凭据与维护脚本（含口令），不进仓库
+.local/
+
+# 系统文件
 .DS_Store
 Thumbs.db
-*.log
-.vscode/
-.idea/
