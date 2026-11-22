@@ -2,7 +2,7 @@
 // @name         BiliBlocker — B站推荐流屏蔽器
 // @name:en      BiliBlocker — Bilibili Feed Blocker
 // @namespace    biliblocker
-// @version      1.0.2
+// @version      1.0.3
 // @description  拦截搬运知乎热榜的 B 站视频（渲染前删除，无留白），并按关键词/UP/分区/数值规则过滤推荐流与评论区
 // @description:en Block Bilibili feed videos that copy Zhihu hot-list questions, plus rule-based filtering of feeds and comments
 // @author       ConspiracyThorist
@@ -330,7 +330,19 @@
       target.style.setProperty("display", "none", "important");
     }
     target.setAttribute("data-zbb", "1");
-    repackIfSparse(target);
+    flattenRowMargins(target);
+  }
+  function flattenRowMargins(target) {
+    const grid = target.parentElement;
+    if (!grid) return;
+    const cs = typeof getComputedStyle === "function" ? getComputedStyle(grid) : null;
+    if (!cs || cs.display !== "grid" && cs.display !== "inline-grid") return;
+    for (const child of Array.from(grid.children)) {
+      if (!(child instanceof HTMLElement)) continue;
+      const ccs = getComputedStyle(child);
+      if (ccs.marginTop && ccs.marginTop !== "0px") child.style.setProperty("margin-top", "0px");
+      if (ccs.marginBottom && ccs.marginBottom !== "0px") child.style.setProperty("margin-bottom", "0px");
+    }
   }
   function isLayoutContainer(el) {
     if (typeof getComputedStyle !== "function") return false;
@@ -352,14 +364,6 @@
       break;
     }
     return target;
-  }
-  function repackIfSparse(target) {
-    const grid = target.parentElement;
-    if (!grid || typeof getComputedStyle !== "function") return;
-    const cs = getComputedStyle(grid);
-    if (cs.display !== "grid" && cs.display !== "inline-grid") return;
-    if (cs.gridAutoFlow.includes("dense")) return;
-    if (grid instanceof HTMLElement) grid.style.setProperty("grid-auto-flow", "row dense");
   }
   function ensureStyle(doc = document) {
     if (doc.getElementById(STYLE_ID)) return;
@@ -405,6 +409,22 @@ a:hover > [data-zbb-up],
     if (!root) return;
     root.appendChild(style);
   }
+  var guardedDocs = /* @__PURE__ */ new WeakSet();
+  function guardUpButtonClicks(doc) {
+    if (guardedDocs.has(doc)) return;
+    guardedDocs.add(doc);
+    const stop = (event) => {
+      const target = event.target;
+      if (!target || typeof target.closest !== "function") return;
+      if (!target.closest("[data-zbb-up]")) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+    };
+    for (const type of ["pointerdown", "mousedown", "click"]) {
+      doc.addEventListener(type, stop, true);
+    }
+  }
   function attachUpButton(card, owner, onBlock) {
     if (card.querySelector("[data-zbb-up]")) return;
     if (!card.textContent || card.textContent.trim().length < 2) return;
@@ -427,6 +447,7 @@ a:hover > [data-zbb-up],
     btn.setAttribute("data-zbb-up", "1");
     btn.textContent = "屏蔽此 UP";
     btn.title = `把 ${owner.name || owner.mid} 加入 UP 库，此后其视频不再出现在首页`;
+    guardUpButtonClicks(card.ownerDocument ?? document);
     const swallow = (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -1893,7 +1914,7 @@ a:hover > [data-zbb-up],
       ${TABS.map((t) => `<button data-tab="${t.id}">${t.icon}${t.name}</button>`).join("")}
     </div>
     <div class="zbb-body"><div data-pane="overview"></div><div data-pane="log" class="zbb-hidden"></div><div data-pane="rules" class="zbb-hidden"></div><div data-pane="settings" class="zbb-hidden"></div></div>
-    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.2</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
+    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.3</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
   `;
     opts.mount.appendChild(root);
     let active = "overview";
