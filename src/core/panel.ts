@@ -218,7 +218,7 @@ export function mountPanel(opts: PanelOptions): PanelHandle {
       ${TABS.map((t) => `<button data-tab="${t.id}">${t.icon}${t.name}</button>`).join('')}
     </div>
     <div class="zbb-body"><div data-pane="overview"></div><div data-pane="log" class="zbb-hidden"></div><div data-pane="rules" class="zbb-hidden"></div><div data-pane="settings" class="zbb-hidden"></div></div>
-    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.2</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
+    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.1</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
   `;
   opts.mount.appendChild(root);
 
