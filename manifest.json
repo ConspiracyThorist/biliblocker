@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BiliBlocker — B站推荐流屏蔽器",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "拦截 B 站首页搬运知乎热榜的视频，并按关键词/UP/分区/数值规则过滤推荐流与评论区；网络层渲染前删除，DOM 兜底",
   "minimum_chrome_version": "116",
   "permissions": [
