@@ -2,7 +2,6 @@
 node_modules/
 dist/
 .test-tmp/
-.dsh-office-*
 
 # 体检与调参的生成物
 reports/
