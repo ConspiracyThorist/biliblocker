@@ -48,7 +48,30 @@ export function hideCard(card: Element): void {
     target.style.setProperty('display', 'none', 'important');
   }
   target.setAttribute('data-zbb', '1');
-  repackIfSparse(target);
+  flattenRowMargins(target);
+}
+
+/**
+ * 同排卡片为什么会被「顶下去」40px：
+ *
+ * B 站给不同批次的卡片加了上下间距（实测有 0 / 24 / 40px 三种），本来是按批次整齐应用的。
+ * 我们把其中几张藏掉之后，间距就落到剩下的卡片上，同一排里出现 40px 的高低差——
+ * 用户看到的就是「某张卡片向下错位」。
+ *
+ * 处理：把同一网格容器里直接子项的上下外边距拉平。只动 margin，不动尺寸与位置算法，
+ * 行高仍由 B 站自己的 grid-template-rows 决定。
+ */
+function flattenRowMargins(target: Element): void {
+  const grid = target.parentElement;
+  if (!grid) return;
+  const cs = typeof getComputedStyle === 'function' ? getComputedStyle(grid) : null;
+  if (!cs || (cs.display !== 'grid' && cs.display !== 'inline-grid')) return;
+  for (const child of Array.from(grid.children)) {
+    if (!(child instanceof HTMLElement)) continue;
+    const ccs = getComputedStyle(child);
+    if (ccs.marginTop && ccs.marginTop !== '0px') child.style.setProperty('margin-top', '0px');
+    if (ccs.marginBottom && ccs.marginBottom !== '0px') child.style.setProperty('margin-bottom', '0px');
+  }
 }
 
 /** 父级是不是 grid / flex 布局容器（这类容器的子元素才有「格子」占位） */
@@ -86,18 +109,12 @@ function layoutItemOf(card: Element): Element {
 }
 
 /**
- * 稀疏打包（grid-auto-flow: row）下，隐藏一个大格子后留下 2×2 空洞，后面的 1×1 卡片
- * 不会回填，页面看起来就是错位的。把容器切到 dense 让后面的卡片填进来。
- * 只在真的发生隐藏时改，且只改布局属性，不动 B 站的其它样式。
+ * 稀疏打包（grid-auto-flow: row）下，隐藏一个大格子后留下空洞，后面的卡片不会回填。
+ * 试过把容器切成 dense 让卡片回填，结果更糟：B 站按「第几行」给卡片加了上下间距
+ * （例如每三行 40px 的段落间距），卡片一旦被挪到别的行，间距就不匹配，
+ * 同一行里的卡片会高低错开——这才是用户说的「错位」。
+ * 所以这里不动 B 站的布局流，宁可留一点空，也不要让卡片跑位。
  */
-function repackIfSparse(target: Element): void {
-  const grid = target.parentElement;
-  if (!grid || typeof getComputedStyle !== 'function') return;
-  const cs = getComputedStyle(grid);
-  if (cs.display !== 'grid' && cs.display !== 'inline-grid') return;
-  if (cs.gridAutoFlow.includes('dense')) return;
-  if (grid instanceof HTMLElement) grid.style.setProperty('grid-auto-flow', 'row dense');
-}
 
 /**
  * 把已经隐藏的卡片全部放出来。
@@ -178,6 +195,30 @@ a:hover > [data-zbb-up],
  * 根节点的定位上下文经常不是我们以为的那个，按钮就会飘到别处。
  * 优先挂到封面元素上——它自带定位、且正好是鼠标悬停区域。
  */
+/**
+ * 在 document 捕获阶段先一步拦下按钮上的事件。
+ *
+ * 按钮自己的监听跑不到「祖先的捕获监听」前面：B 站把卡片点击挂在 document 捕获阶段，
+ * 只靠按钮上的 stopPropagation 仍会被它抢走，表现为「点屏蔽此 UP 却打开了视频」。
+ */
+const guardedDocs = new WeakSet<Document>();
+
+function guardUpButtonClicks(doc: Document): void {
+  if (guardedDocs.has(doc)) return;
+  guardedDocs.add(doc);
+  const stop = (event: Event): void => {
+    const target = event.target as Element | null;
+    if (!target || typeof target.closest !== 'function') return;
+    if (!target.closest('[data-zbb-up]')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    (event as Event & { stopImmediatePropagation?: () => void }).stopImmediatePropagation?.();
+  };
+  for (const type of ['pointerdown', 'mousedown', 'click'] as const) {
+    doc.addEventListener(type, stop, true);
+  }
+}
+
 export function attachUpButton(card: Element, owner: UpOwner, onBlock: (owner: UpOwner) => void): void {
   if (card.querySelector('[data-zbb-up]')) return;
 
@@ -218,6 +259,7 @@ export function attachUpButton(card: Element, owner: UpOwner, onBlock: (owner: U
 
   // 按下与点击都就地拦下：既避免触发卡片自身的「稍后观看」，
   // 也避免其它脚本挂的委托监听收到我们按钮的事件
+  guardUpButtonClicks(card.ownerDocument ?? document);
   const swallow = (event: Event): void => {
     event.preventDefault();
     event.stopPropagation();
