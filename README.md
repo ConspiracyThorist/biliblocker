@@ -19,12 +19,16 @@
 
 ### 油猴（Tampermonkey）
 
+**推荐**：从 Greasy Fork 安装 —— <https://greasyfork.org/scripts/606704>
+
+也可以直接用仓库里的文件：
+
 1. 打开 [BiliBlocker.user.js](./BiliBlocker.user.js)（压缩版，直接安装）
 2. Tampermonkey 会弹出安装页；或把它拖进浏览器窗口
 3. 刷新 B 站，右下角出现胶囊
 
 > 脚本市场（Greasy Fork）要求源码可读，仓库里另有一份未压缩的
-> [BiliBlocker.greasyfork.user.js](./BiliBlocker.greasyfork.user.js)，功能完全相同。
+> [BiliBlocker.greasyfork.user.js](./BiliBlocker.greasyfork.user.js)，那份就是市场版，功能完全相同。
 
 ### Chrome 扩展
 
