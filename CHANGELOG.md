@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-22
+
+### Fixed
+
+- 油猴头部 `@icon` 指向本仓库的 jsDelivr 链接，而 jsDelivr 不服务 fork 仓库，图标会 404；
+  改指向数据仓（非 fork）的同一张图
+
 ## [1.0.0] - 2026-11-22
 
 首个版本：把 [zhihu-bili-blocker](https://github.com/ConspiracyThorist/zhihu-bili-blocker)（知乎搬运拦截）
