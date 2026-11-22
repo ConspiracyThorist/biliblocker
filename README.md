@@ -119,7 +119,6 @@ docs/            架构说明与脚本市场附加信息
 npm install
 npm run build      # dist/BiliBlocker.zip + 两种 user.js，并在仓库根留一份
 npm run typecheck
-npm test           # 本地测试套件（tests/ 按维护者惯例不进仓库）
 ```
 
 架构、判定规则与性能数据见 [docs/architecture.md](./docs/architecture.md)。
