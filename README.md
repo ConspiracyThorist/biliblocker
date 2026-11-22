@@ -105,14 +105,13 @@ src/extension/   Chrome MV3 壳：background（唯一配置写者）/ content / 
 src/userscript/  油猴壳：同一套 core，GM_* 适配
 assets/icons/    扩展与脚本图标
 tools/           构建辅助（zip 打包）
-docs/            面向脚本市场的附加信息
+docs/            架构说明与脚本市场附加信息
 ```
 
 ## 参与
 
-- 贡献流程与提交约定见 [CONTRIBUTING.md](./CONTRIBUTING.md)
+- 贡献流程、提交约定与行为准则见 [CONTRIBUTING.md](./CONTRIBUTING.md)
 - 漏洞请走私密渠道，见 [SECURITY.md](./SECURITY.md)
-- 行为准则见 [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 
 ## 开发
 
@@ -123,9 +122,15 @@ npm run typecheck
 npm test           # 本地测试套件（tests/ 按维护者惯例不进仓库）
 ```
 
-架构、判定规则与性能数据见 [DEVELOP.md](./DEVELOP.md)。
+架构、判定规则与性能数据见 [docs/architecture.md](./docs/architecture.md)。
 
-## 许可证
+## 许可证与署名
 
-MIT。本项目移植并改写了 [biliHoyoFairy](https://github.com/gendu-amd/biliHoyoFairy)（MIT）与
-bili-comment-preload 的部分逻辑，来源与版权声明见 [CREDITS.md](./CREDITS.md)。
+MIT，版权归 ConspiracyThorist。
+
+本项目移植并改写了以下 MIT 项目的部分代码，按 MIT 要求保留其版权声明：
+
+- [biliHoyoFairy](https://github.com/gendu-amd/biliHoyoFairy)（作者 gendu-amd）：规则文本归一、卡片字段归一与 DOM 抽取、评论区判定维度
+- bili-comment-preload（本项目维护者早前的油猴脚本）：评论区大图预加载思路
+
+改动方式与用到的文件在 [docs/architecture.md](./docs/architecture.md) 的「移植说明」一节。
