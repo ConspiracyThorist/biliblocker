@@ -15,7 +15,7 @@
 
 - [ ] 两端同改：扩展与油猴共用 `src/core/`，本次改动会让**两个产物**都重建（只改一端的壳层除外）
 - [ ] `npm run typecheck` 通过
-- [ ] 单元测试通过；修 bug 时新增了能复现它的用例（回滚修复后应变红）
+- [ ] 改动做过回归自检：问题能复现，修复回滚后应重现
 - [ ] 改了 UI 的话附截图
 - [ ] 动了拦截/扫描热路径的话附耗时数字
 - [ ] `CHANGELOG.md` 的 `[Unreleased]` 下加了条目，且只用 Added/Changed/Deprecated/Removed/Fixed/Security
