@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        提之前建议先看一眼 [DEVELOP.md](../blob/main/DEVELOP.md) 的「判定规则」与「匹配性能」两节，
+        提之前建议先看一眼 [docs/architecture.md](../blob/main/docs/architecture.md) 的「判定规则」与「匹配性能」两节，
         有些想法受数据可得性限制（例如按收藏/投币比过滤，feed 里拿不到这些字段）。
   - type: textarea
     id: problem
