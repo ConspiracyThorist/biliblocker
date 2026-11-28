@@ -3,7 +3,7 @@ import { extractCardInfo } from '../core/rules/domCard';
 import { matchCard } from '../core/rules/rules';
 import { preparePool, type HotEntry } from '../core/engine';
 import { installFeedHook } from '../core/hook';
-import { compileRules, type CompiledRules } from '../core/rules/rules';
+import { compileRulesCached, type CompiledRules } from '../core/rules/rules';
 import { compileComments, DEFAULT_COMMENT_RULES, installCommentFilter, type CommentFilterHandle, type CompiledComments } from '../core/comments';
 import { createSettingsStore, unwrapSettings } from '../core/store';
 import { installCommentImagePreload } from '../core/preload';
@@ -161,7 +161,7 @@ function rebuild(): void {
     split.fresh.map((e) => e.title),
     split.stale.map((e) => e.title),
   );
-  state.rules = compileRules(state.settings.rules ?? DEFAULT_SETTINGS.rules);
+  state.rules = compileRulesCached(state.settings.rules ?? DEFAULT_SETTINGS.rules);
   state.comments = compileComments(state.settings.comments ?? DEFAULT_COMMENT_RULES);
   commentFilter?.rescan();
 }
