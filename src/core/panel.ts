@@ -11,6 +11,7 @@ import type { HitRecord, Settings } from './types';
 import type { RuleSet } from './rules/rules';
 import type { CommentRules } from './comments';
 import { buildExport, parseImport } from './rules/import';
+import { kindHint, parseQuickInput, type QuickKind } from './rules/quickadd';
 
 export interface PanelState {
   settings: Settings;
@@ -111,10 +112,18 @@ const CSS = `
 .zbb-tag.up{background:rgba(229,165,75,.14);color:#e9bd7d}
 .zbb-allow{appearance:none;border:1px solid var(--line);background:transparent;color:var(--text3);font:inherit;font-size:11px;padding:3px 8px;border-radius:7px;cursor:pointer;white-space:nowrap;align-self:center}
 .zbb-allow:hover{border-color:var(--pink-line);color:var(--pink)}
-.zbb-quick{display:flex;gap:7px}
-.zbb-quick input{flex:1;min-width:0;background:#141518;border:1px solid var(--line);border-radius:9px;color:var(--text);font:inherit;font-size:12px;padding:7px 10px;outline:none}
+.zbb-quick{display:flex;gap:7px;align-items:flex-start}
+.zbb-quick-kinds{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.zbb-kchip{background:#191b1f;border:1px solid var(--line);color:#a9aeb6;border-radius:999px;padding:3px 9px;font:inherit;font-size:11px;cursor:pointer}
+.zbb-kchip.on{background:rgba(251,114,153,.16);border-color:var(--pink-line);color:#fb7299}
+.zbb-quick-preview{margin-top:6px;font-size:11px;line-height:1.5;color:#8d929a;min-height:16px;white-space:pre-wrap}
+.zbb-quick-preview b{color:#e6e8eb;font-weight:600}
+.zbb-quick input{flex:1;min-width:0;background:#141518;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:7px 10px;font:inherit;font-size:12px;outline:none}
 .zbb-quick input:focus{border-color:var(--pink-line)}
 .zbb-quick input::placeholder{color:#5f646d}
+.zbb-quick textarea{flex:1;min-width:0;resize:none;overflow:hidden;line-height:1.5;background:#141518;border:1px solid var(--line);border-radius:9px;color:var(--text);font:inherit;font-size:12px;padding:7px 10px;outline:none}
+.zbb-quick textarea:focus{border-color:var(--pink-line)}
+.zbb-quick textarea::placeholder{color:#5f646d}
 .zbb-btn{appearance:none;font:inherit;font-size:12px;padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap}
 .zbb-btn.pink{background:var(--pink);border-color:var(--pink);color:#2a0d15;font-weight:600}
 .zbb-btn.ghost{background:transparent}
@@ -194,6 +203,17 @@ function tagOf(rec: HitRecord): { cls: string; text: string } {
   return { cls: 'up', text: 'UP 库' };
 }
 
+/** 记录页的筛选条件 */
+export type LogFilter = 'all' | 'zhihu' | 'rule' | 'other';
+
+/** 记录是否通过搜索与来源筛选（纯函数，便于单测） */
+export function matchesLogFilter(rec: HitRecord, query: string, filter: LogFilter): boolean {
+  if (filter !== 'all' && bucket(rec) !== filter) return false;
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return `${rec.biliTitle}\n${rec.zhihuTitle ?? ''}\n${rec.detail ?? ''}`.toLowerCase().includes(q);
+}
+
 export function mountPanel(opts: PanelOptions): PanelHandle {
   const doc = opts.mount.ownerDocument ?? document;
   if (!doc.getElementById(STYLE_ID)) {
@@ -218,9 +238,49 @@ export function mountPanel(opts: PanelOptions): PanelHandle {
       ${TABS.map((t) => `<button data-tab="${t.id}">${t.icon}${t.name}</button>`).join('')}
     </div>
     <div class="zbb-body"><div data-pane="overview"></div><div data-pane="log" class="zbb-hidden"></div><div data-pane="rules" class="zbb-hidden"></div><div data-pane="settings" class="zbb-hidden"></div></div>
-    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.3</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
+    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.1.0</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
   `;
   opts.mount.appendChild(root);
+
+  /** 快速添加当前选中的类型：'auto' 才做猜测 */
+  let quickKind: QuickKind = 'auto';
+  /** 记录页的搜索词与来源筛选；面板重渲染时保留 */
+  let logQuery = '';
+  let logFilter: LogFilter = 'all';
+
+  /** 实时把「会落到哪条规则」写出来，避免用户点完才发现加错地方 */
+  const updatePreview = (): void => {
+    const box = root.querySelector('#zbb-quick-preview');
+    const input = root.querySelector('#zbb-quick-input') as HTMLTextAreaElement | null;
+    if (!box || !input) return;
+    input.style.height = 'auto';
+    input.style.height = `${Math.min(input.scrollHeight, 96)}px`;
+    if (!input.value.trim()) {
+      box.textContent = '';
+      return;
+    }
+    const { hits, skipped } = parseQuickInput(input.value, quickKind);
+    const lines = hits.slice(0, 5).map((h) => `「${h.value}」→ ${h.note}`);
+    if (hits.length > 5) lines.push(`…共 ${hits.length} 条`);
+    if (skipped.length) lines.push(`跳过 ${skipped.length} 条`);
+    box.textContent = lines.join('\n');
+  };
+
+  root.addEventListener('input', (event) => {
+    const id = (event.target as HTMLElement).id;
+    if (id === 'zbb-quick-input') updatePreview();
+    if (id === 'zbb-log-q') {
+      logQuery = (event.target as HTMLInputElement).value;
+      updateLogList();
+    }
+  });
+
+  root.addEventListener('keydown', (event) => {
+    if ((event.target as HTMLElement).id !== 'zbb-quick-input') return;
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    (root.querySelector('[data-act="quick-add"]') as HTMLElement | null)?.click();
+  });
 
   let active: TabId = 'overview';
   const pane = (id: TabId) => root.querySelector(`[data-pane="${id}"]`) as HTMLElement;
@@ -308,7 +368,38 @@ export function mountPanel(opts: PanelOptions): PanelHandle {
 
   const renderLog = (st: PanelState): string => {
     if (!st.records.length) return '<div class="zbb-card"><div class="zbb-empty">还没有拦截记录。刷新 B 站首页试试。</div></div>';
-    return `<div class="zbb-card" style="padding:2px 13px">${st.records.map(hitRow).join('')}</div>`;
+    const filters: Array<[LogFilter, string]> = [
+      ['all', '全部'],
+      ['zhihu', '搬运'],
+      ['rule', '规则'],
+      ['other', '其它'],
+    ];
+    return `
+      <div class="zbb-quick"><input id="zbb-log-q" placeholder="搜索标题或规则……" value="${esc(logQuery)}"></div>
+      <div class="zbb-quick-kinds">${filters
+        .map(
+          ([id, label]) =>
+            `<button class="zbb-kchip${logFilter === id ? ' on' : ''}" data-act="log-filter" data-filter="${id}">${label}</button>`,
+        )
+        .join('')}</div>
+      <div class="zbb-card" style="padding:2px 13px" id="zbb-log-list">${logRows(st)}</div>`;
+  };
+
+  /** 只重绘列表容器，输入框不重建，光标与输入法状态不会丢 */
+  const logRows = (st: PanelState): string => {
+    const shown = st.records.filter((r) => matchesLogFilter(r, logQuery, logFilter));
+    if (!shown.length) return `<div class="zbb-empty">没有匹配的记录（共 ${st.records.length} 条）</div>`;
+    const head =
+      shown.length === st.records.length
+        ? ''
+        : `<div class="zbb-hint" style="padding:8px 0 4px">匹配 ${shown.length} / ${st.records.length} 条</div>`;
+    return head + shown.map(hitRow).join('');
+  };
+
+  const updateLogList = (): void => {
+    const st = opts.getState();
+    const list = root.querySelector('#zbb-log-list');
+    if (list) list.innerHTML = logRows(st);
   };
 
   const chips = (list: string[], group: string): string =>
@@ -329,14 +420,37 @@ export function mountPanel(opts: PanelOptions): PanelHandle {
       <input class="zbb-num" data-num="${key}" value="${value}" style="width:56px;text-align:right;background:#141518;border:1px solid var(--line);border-radius:7px;color:var(--text);padding:3px 7px;font:inherit;font-size:12px">${unit}
     </div>`;
 
+  const quickKindRow = (): string => {
+    const kinds: Array<[QuickKind, string]> = [
+      ['auto', '自动'],
+      ['keyword', '标题'],
+      ['up', 'UP 名'],
+      ['uid', 'UID'],
+      ['bv', 'BV 号'],
+      ['regex', '正则'],
+      ['partition', '分区'],
+      ['allow', '白名单'],
+    ];
+    return `<div class="zbb-quick-kinds">${kinds
+      .map(
+        ([k, label]) =>
+          `<button class="zbb-kchip${quickKind === k ? ' on' : ''}" data-act="quick-kind" data-kind="${k}">${label}</button>`,
+      )
+      .join('')}</div>`;
+  };
+
   const renderRules = (st: PanelState): string => {
     const r = st.settings.rules;
     return `
-      <div class="zbb-quick">
-        <input id="zbb-quick-input" placeholder="粘贴标题 / BV 号 / UP 名 / 正则…">
-        <button class="zbb-btn pink" data-act="quick-add">添加</button>
+      <div class="zbb-quick-box">
+        ${quickKindRow()}
+        <div class="zbb-quick">
+          <textarea id="zbb-quick-input" rows="1" placeholder="标题 / BV 号 / UP 名 / UID / 正则，可一次粘贴多行"></textarea>
+          <button class="zbb-btn pink" data-act="quick-add">添加</button>
+        </div>
+        <div class="zbb-quick-preview" id="zbb-quick-preview"></div>
+        <div class="zbb-hint">${esc(kindHint(quickKind))}</div>
       </div>
-      <div class="zbb-hint">自动识别：BV 号 → 单视频，纯数字 → UID，/…/ → 正则，其余按标题关键词</div>
       ${group('keywords', '标题关键词', chips(r.keywords, 'keywords'), r.keywords.length)}
       ${group('upNames', 'UP 主名', chips(r.upNames, 'upNames'), r.upNames.length)}
       ${group('uids', 'UID', chips(r.uids, 'uids'), r.uids.length)}
@@ -532,15 +646,67 @@ export function mountPanel(opts: PanelOptions): PanelHandle {
       el.querySelector('.chev')!.textContent = body?.classList.contains('zbb-hidden') ? '›' : '⌄';
       return;
     }
+    if (act === 'log-filter') {
+      logFilter = (el.dataset.filter as LogFilter) ?? 'all';
+      root.querySelectorAll('[data-act="log-filter"]').forEach((chip) => {
+        chip.classList.toggle('on', (chip as HTMLElement).dataset.filter === logFilter);
+      });
+      updateLogList();
+      return;
+    }
+    if (act === 'quick-kind') {
+      const kind = (el.dataset.kind as QuickKind) ?? 'auto';
+      quickKind = kind;
+      // 只更新选中态与提示，不动输入框内容
+      root.querySelectorAll('.zbb-kchip').forEach((chip) => {
+        chip.classList.toggle('on', (chip as HTMLElement).dataset.kind === kind);
+      });
+      const hint = root.querySelector('.zbb-quick-box .zbb-hint');
+      if (hint) hint.textContent = kindHint(kind);
+      updatePreview();
+      return;
+    }
     if (act === 'quick-add') {
-      const input = root.querySelector('#zbb-quick-input') as HTMLInputElement | null;
-      const raw = (input?.value ?? '').trim();
-      if (!raw) return;
-      const next: Partial<RuleSet> = {};
-      if (/^BV[0-9A-Za-z]+$/.test(raw)) next.bvids = [...st.settings.rules.bvids, raw];
-      else if (/^\d{2,}$/.test(raw)) next.uids = [...st.settings.rules.uids, raw];
-      else next.keywords = [...st.settings.rules.keywords, raw];
-      patchRules(next);
+      const input = root.querySelector('#zbb-quick-input') as HTMLTextAreaElement | null;
+      const raw = input?.value ?? '';
+      if (!raw.trim()) return;
+      const { hits } = parseQuickInput(raw, quickKind);
+      if (!hits.length) return;
+
+      const r = st.settings.rules;
+      const buckets: Record<string, string[]> = {
+        keyword: [...r.keywords],
+        up: [...r.upNames],
+        uid: [...r.uids],
+        bv: [...r.bvids],
+        partition: [...r.partitions],
+        allow: [...r.allowKeywords],
+      };
+      const seen = new Set(Object.values(buckets).flat());
+      let added = 0;
+      let dup = 0;
+      for (const hit of hits) {
+        if (seen.has(hit.value)) {
+          dup += 1;
+          continue;
+        }
+        seen.add(hit.value);
+        buckets[hit.target].push(hit.value);
+        added += 1;
+      }
+      if (!added) {
+        const preview = root.querySelector('#zbb-quick-preview');
+        if (preview) preview.textContent = `这 ${dup} 条已经在规则里了`;
+        return;
+      }
+      patchRules({
+        keywords: buckets.keyword,
+        upNames: buckets.up,
+        uids: buckets.uid,
+        bvids: buckets.bv,
+        partitions: buckets.partition,
+        allowKeywords: buckets.allow,
+      });
       if (input) input.value = '';
       return;
     }
