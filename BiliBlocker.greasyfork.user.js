@@ -2,7 +2,7 @@
 // @name         BiliBlocker — B站推荐流屏蔽器
 // @name:en      BiliBlocker — Bilibili Feed Blocker
 // @namespace    biliblocker
-// @version      1.0.3
+// @version      1.1.0
 // @description  拦截搬运知乎热榜的 B 站视频（渲染前删除，无留白），并按关键词/UP/分区/数值规则过滤推荐流与评论区
 // @description:en Block Bilibili feed videos that copy Zhihu hot-list questions, plus rule-based filtering of feeds and comments
 // @author       ConspiracyThorist
@@ -930,6 +930,15 @@ a:hover > [data-zbb-up],
     }
     return null;
   }
+  var cacheKey = "";
+  var cacheValue = null;
+  function compileRulesCached(set) {
+    const key = JSON.stringify(set);
+    if (cacheValue && key === cacheKey) return cacheValue;
+    cacheKey = key;
+    cacheValue = compileRules(set);
+    return cacheValue;
+  }
 
   // src/core/pruner.ts
   var CARD_KEYS = ["bvid", "aid", "goto", "cid"];
@@ -1758,6 +1767,83 @@ a:hover > [data-zbb-up],
     );
   }
 
+  // src/core/rules/quickadd.ts
+  var KIND_LABEL = {
+    keyword: "标题关键词",
+    up: "UP 主名",
+    uid: "UID",
+    bv: "BV 号",
+    regex: "正则",
+    partition: "分区",
+    allow: "白名单"
+  };
+  function kindHint(kind) {
+    if (kind === "auto") return "自动识别：/…/ 正则、BV 号、长数字 UID，其余按标题关键词；写 up: / title: / part: 可按字段包含匹配";
+    return `当前指定为「${KIND_LABEL[kind === "keyword" ? "keyword" : kind]}」，不再自动猜测`;
+  }
+  function isRegexLiteral(text) {
+    if (text.length < 3 || text[0] !== "/") return false;
+    for (let i = text.length - 1; i > 0; i -= 1) {
+      if (text[i] !== "/") continue;
+      let slashes = 0;
+      for (let j = i - 1; j >= 0 && text[j] === "\\"; j -= 1) slashes += 1;
+      if (slashes % 2 === 1) continue;
+      if (!/^[dgimsuvy]*$/.test(text.slice(i + 1))) continue;
+      return i > 1;
+    }
+    return false;
+  }
+  function asRegexLiteral(body) {
+    return body.startsWith("/") && isRegexLiteral(body) ? body : `/${body.replace(/\//g, "\\/")}/`;
+  }
+  function looksLikeBv(text) {
+    return /^BV[0-9A-Za-z]{6,}$/i.test(text);
+  }
+  var SCOPED = /^(title|up|part(?:ition)?)\s*[:：]\s*(\S[\s\S]*)$/i;
+  function parseQuickLine(raw, kind = "auto") {
+    const text = raw.trim();
+    if (!text) return null;
+    const scoped = text.match(SCOPED);
+    if (scoped) {
+      const field = scoped[1].toLowerCase();
+      const label = field.startsWith("part") ? "分区" : field === "up" ? "UP 名" : "标题";
+      return { target: "keyword", value: text, note: `按 ${label} 字段包含匹配` };
+    }
+    const prefixed = text.match(/^(uid|bv|allow|re(?:gex)?)\s*[:：]\s*(.+)$/i);
+    if (prefixed) {
+      const token = prefixed[1].toLowerCase();
+      const value = prefixed[2].trim();
+      if (token === "uid") return { target: "uid", value, note: "按 UID 添加" };
+      if (token === "bv") return { target: "bv", value, note: "按 BV 号添加" };
+      if (token === "allow") return { target: "allow", value, note: "按白名单添加" };
+      return { target: "keyword", value: asRegexLiteral(value), note: "按正则添加" };
+    }
+    if (kind !== "auto") {
+      if (kind === "regex") {
+        return { target: "keyword", value: isRegexLiteral(text) ? text : asRegexLiteral(text), note: "按正则添加" };
+      }
+      return { target: kind, value: text, note: `按${KIND_LABEL[kind]}添加` };
+    }
+    if (isRegexLiteral(text)) return { target: "keyword", value: text, note: "识别为正则（关键词列表，按 /…/ 解释）" };
+    if (looksLikeBv(text)) return { target: "bv", value: text, note: "识别为 BV 号" };
+    if (/^\d+$/.test(text)) {
+      if (text.length >= 5) return { target: "uid", value: text, note: "识别为 UID" };
+      return { target: "keyword", value: text, note: "短数字按标题关键词添加（要当 UID 请点上方 UID）" };
+    }
+    return { target: "keyword", value: text, note: "按标题关键词添加" };
+  }
+  function parseQuickInput(text, kind = "auto") {
+    const hits = [];
+    const skipped = [];
+    for (const line of text.split(/\r?\n/)) {
+      if (!line.trim()) continue;
+      const hit = parseQuickLine(line, kind);
+      if (hit) hits.push(hit);
+      else skipped.push(line.trim());
+    }
+    return { hits, skipped };
+  }
+
   // src/core/panel.ts
   var STYLE_ID2 = "zbb-panel-style";
   var CSS = `
@@ -1818,10 +1904,18 @@ a:hover > [data-zbb-up],
 .zbb-tag.up{background:rgba(229,165,75,.14);color:#e9bd7d}
 .zbb-allow{appearance:none;border:1px solid var(--line);background:transparent;color:var(--text3);font:inherit;font-size:11px;padding:3px 8px;border-radius:7px;cursor:pointer;white-space:nowrap;align-self:center}
 .zbb-allow:hover{border-color:var(--pink-line);color:var(--pink)}
-.zbb-quick{display:flex;gap:7px}
-.zbb-quick input{flex:1;min-width:0;background:#141518;border:1px solid var(--line);border-radius:9px;color:var(--text);font:inherit;font-size:12px;padding:7px 10px;outline:none}
+.zbb-quick{display:flex;gap:7px;align-items:flex-start}
+.zbb-quick-kinds{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.zbb-kchip{background:#191b1f;border:1px solid var(--line);color:#a9aeb6;border-radius:999px;padding:3px 9px;font:inherit;font-size:11px;cursor:pointer}
+.zbb-kchip.on{background:rgba(251,114,153,.16);border-color:var(--pink-line);color:#fb7299}
+.zbb-quick-preview{margin-top:6px;font-size:11px;line-height:1.5;color:#8d929a;min-height:16px;white-space:pre-wrap}
+.zbb-quick-preview b{color:#e6e8eb;font-weight:600}
+.zbb-quick input{flex:1;min-width:0;background:#141518;border:1px solid var(--line);border-radius:9px;color:var(--text);padding:7px 10px;font:inherit;font-size:12px;outline:none}
 .zbb-quick input:focus{border-color:var(--pink-line)}
 .zbb-quick input::placeholder{color:#5f646d}
+.zbb-quick textarea{flex:1;min-width:0;resize:none;overflow:hidden;line-height:1.5;background:#141518;border:1px solid var(--line);border-radius:9px;color:var(--text);font:inherit;font-size:12px;padding:7px 10px;outline:none}
+.zbb-quick textarea:focus{border-color:var(--pink-line)}
+.zbb-quick textarea::placeholder{color:#5f646d}
 .zbb-btn{appearance:none;font:inherit;font-size:12px;padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--text);cursor:pointer;white-space:nowrap}
 .zbb-btn.pink{background:var(--pink);border-color:var(--pink);color:#2a0d15;font-weight:600}
 .zbb-btn.ghost{background:transparent}
@@ -1891,6 +1985,14 @@ a:hover > [data-zbb-up],
     if (bucket(rec) === "zhihu") return { cls: "zh", text: "知乎题库" };
     return { cls: "up", text: "UP 库" };
   }
+  function matchesLogFilter(rec, query, filter) {
+    if (filter !== "all" && bucket(rec) !== filter) return false;
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return `${rec.biliTitle}
+${rec.zhihuTitle ?? ""}
+${rec.detail ?? ""}`.toLowerCase().includes(q);
+  }
   function mountPanel(opts) {
     const doc = opts.mount.ownerDocument ?? document;
     if (!doc.getElementById(STYLE_ID2)) {
@@ -1914,9 +2016,42 @@ a:hover > [data-zbb-up],
       ${TABS.map((t) => `<button data-tab="${t.id}">${t.icon}${t.name}</button>`).join("")}
     </div>
     <div class="zbb-body"><div data-pane="overview"></div><div data-pane="log" class="zbb-hidden"></div><div data-pane="rules" class="zbb-hidden"></div><div data-pane="settings" class="zbb-hidden"></div></div>
-    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.0.3</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
+    <div class="zbb-foot"><span class="zbb-num">BiliBlocker v1.1.0</span><span class="zbb-spacer"></span><span>网络层 + DOM 兜底</span></div>
   `;
     opts.mount.appendChild(root);
+    let quickKind = "auto";
+    let logQuery = "";
+    let logFilter = "all";
+    const updatePreview = () => {
+      const box = root.querySelector("#zbb-quick-preview");
+      const input = root.querySelector("#zbb-quick-input");
+      if (!box || !input) return;
+      input.style.height = "auto";
+      input.style.height = `${Math.min(input.scrollHeight, 96)}px`;
+      if (!input.value.trim()) {
+        box.textContent = "";
+        return;
+      }
+      const { hits, skipped } = parseQuickInput(input.value, quickKind);
+      const lines = hits.slice(0, 5).map((h) => `「${h.value}」→ ${h.note}`);
+      if (hits.length > 5) lines.push(`…共 ${hits.length} 条`);
+      if (skipped.length) lines.push(`跳过 ${skipped.length} 条`);
+      box.textContent = lines.join("\n");
+    };
+    root.addEventListener("input", (event) => {
+      const id = event.target.id;
+      if (id === "zbb-quick-input") updatePreview();
+      if (id === "zbb-log-q") {
+        logQuery = event.target.value;
+        updateLogList();
+      }
+    });
+    root.addEventListener("keydown", (event) => {
+      if (event.target.id !== "zbb-quick-input") return;
+      if (event.key !== "Enter" || event.shiftKey) return;
+      event.preventDefault();
+      root.querySelector('[data-act="quick-add"]')?.click();
+    });
     let active = "overview";
     const pane = (id) => root.querySelector(`[data-pane="${id}"]`);
     const setTab = (id) => {
@@ -1996,7 +2131,29 @@ a:hover > [data-zbb-up],
     };
     const renderLog = (st) => {
       if (!st.records.length) return '<div class="zbb-card"><div class="zbb-empty">还没有拦截记录。刷新 B 站首页试试。</div></div>';
-      return `<div class="zbb-card" style="padding:2px 13px">${st.records.map(hitRow).join("")}</div>`;
+      const filters = [
+        ["all", "全部"],
+        ["zhihu", "搬运"],
+        ["rule", "规则"],
+        ["other", "其它"]
+      ];
+      return `
+      <div class="zbb-quick"><input id="zbb-log-q" placeholder="搜索标题或规则……" value="${esc(logQuery)}"></div>
+      <div class="zbb-quick-kinds">${filters.map(
+        ([id, label]) => `<button class="zbb-kchip${logFilter === id ? " on" : ""}" data-act="log-filter" data-filter="${id}">${label}</button>`
+      ).join("")}</div>
+      <div class="zbb-card" style="padding:2px 13px" id="zbb-log-list">${logRows(st)}</div>`;
+    };
+    const logRows = (st) => {
+      const shown = st.records.filter((r) => matchesLogFilter(r, logQuery, logFilter));
+      if (!shown.length) return `<div class="zbb-empty">没有匹配的记录（共 ${st.records.length} 条）</div>`;
+      const head = shown.length === st.records.length ? "" : `<div class="zbb-hint" style="padding:8px 0 4px">匹配 ${shown.length} / ${st.records.length} 条</div>`;
+      return head + shown.map(hitRow).join("");
+    };
+    const updateLogList = () => {
+      const st = opts.getState();
+      const list = root.querySelector("#zbb-log-list");
+      if (list) list.innerHTML = logRows(st);
     };
     const chips = (list, group2) => list.length ? list.map((v, i) => `<span class="zbb-chip">${esc(v)}<i data-act="del" data-group="${group2}" data-i="${i}">×</i></span>`).join("") : '<span class="zbb-empty">还没有</span>';
     const group = (id, name, body, count) => `
@@ -2010,14 +2167,33 @@ a:hover > [data-zbb-up],
     <div class="zbb-row"><span class="label">${label}</span><span class="zbb-spacer"></span>
       <input class="zbb-num" data-num="${key}" value="${value}" style="width:56px;text-align:right;background:#141518;border:1px solid var(--line);border-radius:7px;color:var(--text);padding:3px 7px;font:inherit;font-size:12px">${unit}
     </div>`;
+    const quickKindRow = () => {
+      const kinds = [
+        ["auto", "自动"],
+        ["keyword", "标题"],
+        ["up", "UP 名"],
+        ["uid", "UID"],
+        ["bv", "BV 号"],
+        ["regex", "正则"],
+        ["partition", "分区"],
+        ["allow", "白名单"]
+      ];
+      return `<div class="zbb-quick-kinds">${kinds.map(
+        ([k, label]) => `<button class="zbb-kchip${quickKind === k ? " on" : ""}" data-act="quick-kind" data-kind="${k}">${label}</button>`
+      ).join("")}</div>`;
+    };
     const renderRules = (st) => {
       const r = st.settings.rules;
       return `
-      <div class="zbb-quick">
-        <input id="zbb-quick-input" placeholder="粘贴标题 / BV 号 / UP 名 / 正则…">
-        <button class="zbb-btn pink" data-act="quick-add">添加</button>
+      <div class="zbb-quick-box">
+        ${quickKindRow()}
+        <div class="zbb-quick">
+          <textarea id="zbb-quick-input" rows="1" placeholder="标题 / BV 号 / UP 名 / UID / 正则，可一次粘贴多行"></textarea>
+          <button class="zbb-btn pink" data-act="quick-add">添加</button>
+        </div>
+        <div class="zbb-quick-preview" id="zbb-quick-preview"></div>
+        <div class="zbb-hint">${esc(kindHint(quickKind))}</div>
       </div>
-      <div class="zbb-hint">自动识别：BV 号 → 单视频，纯数字 → UID，/…/ → 正则，其余按标题关键词</div>
       ${group("keywords", "标题关键词", chips(r.keywords, "keywords"), r.keywords.length)}
       ${group("upNames", "UP 主名", chips(r.upNames, "upNames"), r.upNames.length)}
       ${group("uids", "UID", chips(r.uids, "uids"), r.uids.length)}
@@ -2206,15 +2382,65 @@ a:hover > [data-zbb-up],
         el.querySelector(".chev").textContent = body?.classList.contains("zbb-hidden") ? "›" : "⌄";
         return;
       }
+      if (act === "log-filter") {
+        logFilter = el.dataset.filter ?? "all";
+        root.querySelectorAll('[data-act="log-filter"]').forEach((chip) => {
+          chip.classList.toggle("on", chip.dataset.filter === logFilter);
+        });
+        updateLogList();
+        return;
+      }
+      if (act === "quick-kind") {
+        const kind = el.dataset.kind ?? "auto";
+        quickKind = kind;
+        root.querySelectorAll(".zbb-kchip").forEach((chip) => {
+          chip.classList.toggle("on", chip.dataset.kind === kind);
+        });
+        const hint = root.querySelector(".zbb-quick-box .zbb-hint");
+        if (hint) hint.textContent = kindHint(kind);
+        updatePreview();
+        return;
+      }
       if (act === "quick-add") {
         const input = root.querySelector("#zbb-quick-input");
-        const raw = (input?.value ?? "").trim();
-        if (!raw) return;
-        const next = {};
-        if (/^BV[0-9A-Za-z]+$/.test(raw)) next.bvids = [...st.settings.rules.bvids, raw];
-        else if (/^\d{2,}$/.test(raw)) next.uids = [...st.settings.rules.uids, raw];
-        else next.keywords = [...st.settings.rules.keywords, raw];
-        patchRules(next);
+        const raw = input?.value ?? "";
+        if (!raw.trim()) return;
+        const { hits } = parseQuickInput(raw, quickKind);
+        if (!hits.length) return;
+        const r = st.settings.rules;
+        const buckets = {
+          keyword: [...r.keywords],
+          up: [...r.upNames],
+          uid: [...r.uids],
+          bv: [...r.bvids],
+          partition: [...r.partitions],
+          allow: [...r.allowKeywords]
+        };
+        const seen = new Set(Object.values(buckets).flat());
+        let added = 0;
+        let dup = 0;
+        for (const hit of hits) {
+          if (seen.has(hit.value)) {
+            dup += 1;
+            continue;
+          }
+          seen.add(hit.value);
+          buckets[hit.target].push(hit.value);
+          added += 1;
+        }
+        if (!added) {
+          const preview = root.querySelector("#zbb-quick-preview");
+          if (preview) preview.textContent = `这 ${dup} 条已经在规则里了`;
+          return;
+        }
+        patchRules({
+          keywords: buckets.keyword,
+          upNames: buckets.up,
+          uids: buckets.uid,
+          bvids: buckets.bv,
+          partitions: buckets.partition,
+          allowKeywords: buckets.allow
+        });
         if (input) input.value = "";
         return;
       }
@@ -2918,7 +3144,7 @@ a:hover > [data-zbb-up],
       split.fresh.map((e) => e.title),
       split.stale.map((e) => e.title)
     );
-    state.rules = compileRules(state.settings.rules ?? DEFAULT_SETTINGS.rules);
+    state.rules = compileRulesCached(state.settings.rules ?? DEFAULT_SETTINGS.rules);
     state.comments = compileComments(state.settings.comments ?? DEFAULT_COMMENT_RULES);
     commentFilter?.rescan();
   }
