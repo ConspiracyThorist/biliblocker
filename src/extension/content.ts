@@ -5,7 +5,7 @@ import { installCommentImagePreload } from '../core/preload';
 import { preparePool, type HotEntry } from '../core/engine';
 import { splitByFreshness, type PoolEntry } from '../core/pool';
 import { extractCardInfo } from '../core/rules/domCard';
-import { compileRules, matchCard, type CompiledRules } from '../core/rules/rules';
+import { compileRulesCached, matchCard, type CompiledRules } from '../core/rules/rules';
 import { type UpEntry } from '../core/ups';
 import { mountWidget } from '../core/widget';
 import {
@@ -90,7 +90,7 @@ function rebuild(entries: PoolEntry[]): void {
   freshTitles = split.fresh.map((e) => e.title);
   staleTitles = split.stale.map((e) => e.title);
   pool = preparePool(freshTitles, staleTitles);
-  rules = compileRules(settings.rules ?? DEFAULT_SETTINGS.rules);
+  rules = compileRulesCached(settings.rules ?? DEFAULT_SETTINGS.rules);
   commentRules = compileComments(settings.comments ?? DEFAULT_COMMENT_RULES);
 }
 
@@ -145,7 +145,7 @@ function applySettings(next: Partial<Settings>): void {
   // 任何配置变更都要重编规则并把已隐藏的卡片放出来重新判定：
   // 删掉一条规则、把 UP 移出黑名单、换强度档位——已隐藏的卡片必须当场恢复，
   // 否则用户看到的就是「删了还在」（Greasyfork 反馈里被点名的问题）。
-  rules = compileRules(settings.rules ?? DEFAULT_SETTINGS.rules);
+  rules = compileRulesCached(settings.rules ?? DEFAULT_SETTINGS.rules);
   commentRules = compileComments(settings.comments ?? DEFAULT_COMMENT_RULES);
   unhideAll();
   scanner?.rescan();
