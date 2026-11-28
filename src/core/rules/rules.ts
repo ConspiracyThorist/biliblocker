@@ -183,3 +183,21 @@ export function matchCard(info: CardInfo, rules: CompiledRules): RuleHit | null 
 
   return null;
 }
+
+/**
+ * 带缓存的编译。
+ *
+ * 每次改设置都会重编译全部规则：关键词多的时候就是几千个 RegExp 重建，
+ * 而绝大多数变更只动一个字段。按「规则内容的 JSON」做键缓存，命中就复用上一次结果。
+ * 用内容而不是对象引用做键，是因为设置经常被整体替换（引用变了，内容没变）。
+ */
+let cacheKey = '';
+let cacheValue: CompiledRules | null = null;
+
+export function compileRulesCached(set: RuleSet): CompiledRules {
+  const key = JSON.stringify(set);
+  if (cacheValue && key === cacheKey) return cacheValue;
+  cacheKey = key;
+  cacheValue = compileRules(set);
+  return cacheValue;
+}
