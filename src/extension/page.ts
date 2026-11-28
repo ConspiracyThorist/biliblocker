@@ -1,6 +1,6 @@
 import { preparePool, type HotEntry } from '../core/engine';
 import { installFeedHook } from '../core/hook';
-import { compileRules, type CompiledRules } from '../core/rules/rules';
+import { compileRulesCached, type CompiledRules } from '../core/rules/rules';
 import { DEFAULT_SETTINGS, type Settings } from '../core/types';
 
 /**
@@ -58,7 +58,7 @@ window.addEventListener('message', (event: MessageEvent) => {
   // 放在 MAIN world 做一次，比把带 Map 的条目从隔离世界克隆过来便宜得多。
   state.hot = preparePool(titles, staleTitles);
   // 规则同理：正则不能跨世界传，只传配置、这边编译
-  state.rules = compileRules(state.settings.rules ?? DEFAULT_SETTINGS.rules);
+  state.rules = compileRulesCached(state.settings.rules ?? DEFAULT_SETTINGS.rules);
   debug.hotLen = state.hot.length;
 
   // content 明确说「已读完 storage」就算就绪：哪怕题库是空的，
